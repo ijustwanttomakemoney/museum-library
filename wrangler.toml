@@ -1,0 +1,9 @@
+name = "museum-library"
+compatibility_date = "2024-08-11"
+pages_build_output_dir = "dist"
+
+[env.production]
+name = "museum-library"
+
+[[env.production.env.vars]]
+NODE_ENV = "production"
