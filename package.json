@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
-    "build:cf": "next build && npx @cloudflare/next-on-pages",
+    "build": "npm install --legacy-peer-deps && next build",
+    "build:cf": "npm install --legacy-peer-deps && next build && npx @cloudflare/next-on-pages",
     "dev": "next dev -p 3001",
     "lint": "next lint",
     "start": "next start",
@@ -59,7 +59,6 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^0.9.9",
     "zod": "3.25.67"
   },
   "devDependencies": {
