@@ -9,7 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: 'export',
+  // Removed output: 'export' to allow dynamic routes with database dependencies
   trailingSlash: true,
   distDir: 'dist',
 }
