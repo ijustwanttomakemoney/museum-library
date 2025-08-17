@@ -21,7 +21,7 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 
 // Add fade-in animation class to the main container
 // Add proper ARIA labels and roles

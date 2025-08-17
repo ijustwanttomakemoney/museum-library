@@ -12,7 +12,7 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import EnhancedReviewSystem from "@/components/enhanced-review-system"
 import FollowButton from "@/components/follow-button"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
 interface MuseumData {

@@ -11,7 +11,7 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 
 interface Exhibit {
   id: number;
