@@ -1,0 +1,114 @@
+{
+  "museums": [
+    {
+      "name": "Example Museum",
+      "location": "Paris",
+      "region": "Ile-de-France",
+      "category": "Art",
+      "image": "http://example.com/museum_image.jpg",
+      "rating": 4.5,
+      "opening_hours": {
+        "monday": "9:00-18:00",
+        "tuesday": "9:00-18:00",
+        "wednesday": "Closed",
+        "thursday": "9:00-21:00",
+        "friday": "9:00-18:00",
+        "saturday": "10:00-19:00",
+        "sunday": "10:00-19:00"
+      },
+      "description": "A brief description of the museum.",
+      "visitors": "1.5 million annually",
+      "address": "123 Museum St, 75001 Paris, France",
+      "phone": "+33 1 23 45 67 89",
+      "website": "http://www.examplemuseum.com",
+      "history": "Founded in 1800...",
+      "highlights": ["Mona Lisa", "Venus de Milo"],
+      "accessibility": {
+        "wheelchair_access": true,
+        "restrooms": true
+      },
+      "amenities": ["Cafe", "Gift Shop"],
+      "images": ["http://example.com/museum_gallery1.jpg", "http://example.com/museum_gallery2.jpg"]
+    }
+  ],
+  "artists": [
+    {
+      "name": "Leonardo da Vinci",
+      "birth_year": 1452,
+      "death_year": 1519,
+      "nationality": "Italian",
+      "biography": "A true Renaissance man...",
+      "style": "Renaissance",
+      "famous_works": ["Mona Lisa", "The Last Supper"],
+      "image": "http://example.com/davinci_image.jpg"
+    }
+  ],
+  "artworks": [
+    {
+      "title": "Mona Lisa",
+      "artist": "Leonardo da Vinci",
+      "artist_id": 1,
+      "year": 1503,
+      "medium": "Oil on poplar panel",
+      "dimensions": "77 cm × 53 cm",
+      "description": "A half-length portrait painting...",
+      "image": "http://example.com/monalisa_image.jpg",
+      "style": "Renaissance",
+      "rating": 4.9,
+      "museum": "Example Museum",
+      "museum_id": 1,
+      "is_on_display": true,
+      "acquisition_date": "1804-01-01",
+      "estimated_value": 860000000.00
+    }
+  ],
+  "exhibits": [
+    {
+      "title": "Masterpieces of the Renaissance",
+      "end_date": "2025-12-31",
+      "image": "http://example.com/exhibit_image.jpg",
+      "description": "An exhibition showcasing Renaissance art.",
+      "museum_id": 1,
+      "start_date": "2025-09-01",
+      "ticket_price": 15.00
+    }
+  ],
+  "users": [
+    {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "avatar": "http://example.com/john_avatar.jpg",
+      "verified": true,
+      "reviews_count": 5,
+      "member_since": "2023",
+      "favorite_museums": [],
+      "favorite_artworks": []
+    }
+  ],
+  "reviews": [
+    {
+      "user_id": 1,
+      "museum_id": 1,
+      "artwork_id": 1,
+      "rating": 5,
+      "title": "Absolutely stunning!",
+      "content": "The Mona Lisa was breathtaking.",
+      "date": "2025-08-12",
+      "likes": 10,
+      "helpful": 8,
+      "images": ["http://example.com/review_image1.jpg"],
+      "tags": ["masterpiece", "must-see"],
+      "verified": true
+    }
+  ],
+  "review_replies": [
+    {
+      "review_id": 1,
+      "user_id": 1,
+      "content": "Thank you for your kind words!",
+      "date": "2025-08-12",
+      "likes": 2,
+      "is_museum_staff": true
+    }
+  ]
+}
