@@ -12,8 +12,13 @@ const nextConfig = {
   // Removed output: 'export' to allow dynamic routes with database dependencies
   trailingSlash: true,
   distDir: 'dist',
-  // Exclude cache and other large files from build output
-  webpack: (config, { isServer }) => {
+  // Disable webpack caching to prevent large cache files
+  webpack: (config, { isServer, dev }) => {
+    // Disable caching in production builds to prevent large cache files
+    if (!dev) {
+      config.cache = false
+    }
+    
     // Optimize bundle size
     config.optimization = {
       ...config.optimization,

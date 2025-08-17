@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build && npm run cleanup",
+    "build": "next build && rm -rf dist/cache dist/.next/cache .next/cache || true",
     "build:cf": "npm install --legacy-peer-deps && next build && npm run cleanup && npx @cloudflare/next-on-pages",
     "cleanup": "rm -rf dist/cache dist/.next/cache .next/cache || true",
     "dev": "next dev -p 3001",
