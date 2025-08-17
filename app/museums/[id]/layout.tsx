@@ -1,11 +1,24 @@
+import { supabase } from "@/lib/supabaseClient"
+
 // Generate static params for all museum IDs
 export async function generateStaticParams() {
-  // Return all possible museum IDs that exist in your data
-  const museumIds = ['1', '2', '3', '4', '5', '6', '7']
-  
-  return museumIds.map((id) => ({
-    id: id,
-  }))
+  try {
+    const { data: museums, error } = await supabase
+      .from("museums")
+      .select("id")
+    
+    if (error) {
+      console.error('Error fetching museum IDs:', error)
+      return []
+    }
+    
+    return museums?.map((museum) => ({
+      id: museum.id.toString(),
+    })) || []
+  } catch (error) {
+    console.error('Error in generateStaticParams:', error)
+    return []
+  }
 }
 
 export default function MuseumLayout({

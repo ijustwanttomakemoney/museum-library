@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,87 +11,45 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import { supabase } from "@/lib/supabaseClient"
 
-const museums = [
-  {
-    id: 1,
-    name: "Musée du Louvre",
-    location: "Paris",
-    region: "Île-de-France",
-    category: "Art",
-    image: "/louvre-museum.png",
-    rating: 4.8,
-    openingHours: "9h00 - 18h00",
-    description: "Le plus grand musée d'art du monde avec des collections exceptionnelles incluant la Joconde.",
-    visitors: "10M+ visiteurs/an",
-  },
-  {
-    id: 2,
-    name: "Musée d'Orsay",
-    location: "Paris",
-    region: "Île-de-France",
-    category: "Impressionnisme",
-    image: "/musee-dorsay-interior.png",
-    rating: 4.7,
-    openingHours: "9h30 - 18h00",
-    description: "Collections impressionnistes et post-impressionnistes dans une ancienne gare.",
-    visitors: "3.5M+ visiteurs/an",
-  },
-  {
-    id: 3,
-    name: "Centre Pompidou",
-    location: "Paris",
-    region: "Île-de-France",
-    category: "Art Moderne",
-    image: "/centre-pompidou-modern-art.png",
-    rating: 4.6,
-    openingHours: "11h00 - 21h00",
-    description: "Art moderne et contemporain dans une architecture révolutionnaire.",
-    visitors: "5M+ visiteurs/an",
-  },
-  {
-    id: 4,
-    name: "Musée des Confluences",
-    location: "Lyon",
-    region: "Auvergne-Rhône-Alpes",
-    category: "Sciences",
-    image: "/musee-confluences-lyon.png",
-    rating: 4.5,
-    openingHours: "10h00 - 18h00",
-    description: "Musée d'anthropologie, de civilisations, de sciences et de sociétés.",
-    visitors: "1M+ visiteurs/an",
-  },
-  {
-    id: 5,
-    name: "Palais des Papes",
-    location: "Avignon",
-    region: "Provence-Alpes-Côte d'Azur",
-    category: "Histoire",
-    image: "/palais-des-papes-avignon.png",
-    rating: 4.4,
-    openingHours: "9h00 - 19h00",
-    description: "Forteresse gothique, résidence des papes au XIVe siècle.",
-    visitors: "650K+ visiteurs/an",
-  },
-  {
-    id: 6,
-    name: "Musée Rodin",
-    location: "Paris",
-    region: "Île-de-France",
-    category: "Sculpture",
-    image: "/placeholder.svg?height=250&width=400",
-    rating: 4.6,
-    openingHours: "10h00 - 18h30",
-    description: "Œuvres du sculpteur Auguste Rodin dans un hôtel particulier et ses jardins.",
-    visitors: "700K+ visiteurs/an",
-  },
-]
+interface Museum {
+  id: number;
+  name: string;
+  location: string;
+  region: string;
+  category: string;
+  image: string;
+  rating: number;
+  openingHours: string;
+  description: string;
+  visitors: string;
+}
 
 export default function MuseumsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRegion, setSelectedRegion] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("rating")
+  const [museums, setMuseums] = useState<Museum[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchMuseums = async () => {
+      try {
+        const { data, error } = await supabase.from("museums").select("*")
+        if (error) throw error
+        setMuseums(data as Museum[])
+      } catch (error: any) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMuseums()
+  }, [])
 
   const filteredMuseums = museums
     .filter((museum) => {
@@ -109,6 +67,22 @@ export default function MuseumsPage() {
       if (sortBy === "location") return a.location.localeCompare(b.location)
       return 0
     })
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading museums...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

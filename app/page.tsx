@@ -21,6 +21,7 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import { supabase } from "@/lib/supabaseClient"
 
 // Add fade-in animation class to the main container
 // Add proper ARIA labels and roles
@@ -28,123 +29,6 @@ import Footer from "@/components/footer"
 // Add loading states and smooth transitions
 // Add proper focus management
 
-const museumsByRegion = {
-  Paris: [
-    {
-      id: 1,
-      name: "Musée du Louvre",
-      location: "Paris",
-      image: "/louvre.jpg",
-      rating: 4.8,
-      category: "Art",
-      description: "Le plus grand musée d'art du monde avec des collections exceptionnelles.",
-    },
-    {
-      id: 2,
-      name: "Musée d'Orsay",
-      location: "Paris",
-      image: "/placeholder.svg?height=400&width=600&text=Musée+d'Orsay",
-      rating: 4.7,
-      category: "Impressionnisme",
-      description: "Collections impressionnistes et post-impressionnistes remarquables.",
-    },
-    {
-      id: 3,
-      name: "Centre Pompidou",
-      location: "Paris",
-      image: "/pompidou.jpg",
-      rating: 4.6,
-      category: "Art Moderne",
-      description: "Art moderne et contemporain dans une architecture iconique.",
-    },
-  ],
-  Lyon: [
-    {
-      id: 4,
-      name: "Musée des Beaux-Arts de Lyon",
-      location: "Lyon",
-      image: "/placeholder.svg?height=400&width=600&text=Musée+Beaux-Arts+Lyon",
-      rating: 4.5,
-      category: "Art",
-      description: "L'un des plus importants musées français et européens.",
-    },
-    {
-      id: 5,
-      name: "Musée des Confluences",
-      location: "Lyon",
-      image: "/placeholder.svg?height=400&width=600&text=Musée+Confluences",
-      rating: 4.4,
-      category: "Sciences",
-      description: "Musée d'anthropologie et de sciences naturelles.",
-    },
-  ],
-  Marseille: [
-    {
-      id: 6,
-      name: "Musée d'Histoire de Marseille",
-      location: "Marseille",
-      image: "/placeholder.svg?height=400&width=600&text=Musée+Histoire+Marseille",
-      rating: 4.3,
-      category: "Histoire",
-      description: "Découvrez 2600 ans d'histoire de Marseille.",
-    },
-    {
-      id: 7,
-      name: "Mucem",
-      location: "Marseille",
-      image: "/placeholder.svg?height=400&width=600&text=Mucem",
-      rating: 4.6,
-      category: "Culture",
-      description: "Musée des civilisations de l'Europe et de la Méditerranée.",
-    },
-  ],
-}
-
-const featuredMuseums = Object.values(museumsByRegion).flat()
-
-const trendingExhibits = [
-  {
-    id: 1,
-    title: "Monet et les Nymphéas",
-    museum: "Musée de l'Orangerie",
-    endDate: "2024-03-15",
-    image: "/placeholder.svg?height=300&width=400&text=Monet+Nymphéas",
-    visitors: 1250,
-  },
-  {
-    id: 2,
-    title: "Égypte Ancienne",
-    museum: "Musée du Louvre",
-    endDate: "2024-04-20",
-    image: "/placeholder.svg?height=300&width=400&text=Égypte+Ancienne",
-    visitors: 980,
-  },
-  {
-    id: 3,
-    title: "Picasso Bleu",
-    museum: "Musée Picasso",
-    endDate: "2024-02-28",
-    image: "/placeholder.svg?height=300&width=400&text=Picasso+Bleu",
-    visitors: 750,
-  },
-]
-
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "Nuit des Musées",
-    date: "2024-05-18",
-    location: "Toute la France",
-    type: "Événement National",
-  },
-  {
-    id: 2,
-    title: "Conférence: Art et IA",
-    date: "2024-02-25",
-    location: "Centre Pompidou",
-    type: "Conférence",
-  },
-]
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -152,11 +36,83 @@ export default function HomePage() {
   const [selectedRegion, setSelectedRegion] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
+  const [featuredMuseums, setFeaturedMuseums] = useState<any[]>([])
+  const [trendingExhibits, setTrendingExhibits] = useState<any[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([])
+  const [museumsByRegion, setMuseumsByRegion] = useState<{[key: string]: any[]}>({})
 
-  // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
+    const fetchData = async () => {
+      try {
+        // Fetch museums
+        const { data: museums, error: museumsError } = await supabase
+          .from("museums")
+          .select("*")
+          .order("rating", { ascending: false })
+          .limit(10)
+        if (museumsError) throw museumsError
+
+        // Fetch exhibits
+        const { data: exhibits, error: exhibitsError } = await supabase
+          .from("exhibits")
+          .select(`
+            *,
+            museums (name)
+          `)
+          .gte("end_date", new Date().toISOString().split('T')[0])
+          .order("start_date", { ascending: true })
+          .limit(6)
+        if (exhibitsError) throw exhibitsError
+
+        // Group museums by region
+        const groupedMuseums: {[key: string]: any[]} = {}
+        museums?.forEach(museum => {
+          if (!groupedMuseums[museum.region]) {
+            groupedMuseums[museum.region] = []
+          }
+          groupedMuseums[museum.region].push(museum)
+        })
+
+        // Format exhibits data
+        const formattedExhibits = exhibits?.map(exhibit => ({
+          id: exhibit.id,
+          title: exhibit.title,
+          museum: exhibit.museums?.name || 'Unknown Museum',
+          endDate: new Date(exhibit.end_date).toLocaleDateString('fr-FR'),
+          image: exhibit.image || "/placeholder.svg",
+          visitors: Math.floor(Math.random() * 1000) + 500 // Placeholder visitor count
+        })) || []
+
+        // Create mock upcoming events (since we don't have an events table)
+        const mockEvents = [
+          {
+            id: 1,
+            title: "Nuit des Musées",
+            date: "2024-05-18",
+            location: "Toute la France",
+            type: "Événement National",
+          },
+          {
+            id: 2,
+            title: "Conférence: Art et IA",
+            date: "2024-02-25",
+            location: "Centre Pompidou",
+            type: "Conférence",
+          },
+        ]
+
+        setFeaturedMuseums(museums || [])
+        setTrendingExhibits(formattedExhibits)
+        setUpcomingEvents(mockEvents)
+        setMuseumsByRegion(groupedMuseums)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const nextSlide = () => {
@@ -178,10 +134,10 @@ export default function HomePage() {
 
   // Get featured museum based on selected region
   const getFeaturedMuseum = () => {
-    if (selectedRegion === "all") {
-      return museumsByRegion.Paris[0] // Default to Louvre
+    if (selectedRegion === "all" || !museumsByRegion[selectedRegion]) {
+      return featuredMuseums[0] || { id: 1, name: "Loading...", image: "/placeholder.svg" }
     }
-    return museumsByRegion[selectedRegion as keyof typeof museumsByRegion]?.[0] || museumsByRegion.Paris[0]
+    return museumsByRegion[selectedRegion]?.[0] || featuredMuseums[0] || { id: 1, name: "Loading...", image: "/placeholder.svg" }
   }
 
   const featuredMuseum = getFeaturedMuseum()

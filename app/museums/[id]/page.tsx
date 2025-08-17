@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,172 +12,158 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import EnhancedReviewSystem from "@/components/enhanced-review-system"
 import FollowButton from "@/components/follow-button"
+import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 
-// Mock data for museum details
-const museumData = {
-  id: 1,
-  name: "Musée du Louvre",
-  location: "Paris, France",
-  address: "Rue de Rivoli, 75001 Paris",
-  phone: "+33 1 40 20 50 50",
-  website: "https://www.louvre.fr",
-  category: "Art",
-  rating: 4.8,
-  totalReviews: 15420,
-  openingHours: {
-    Lundi: "Fermé",
-    Mardi: "9h00 - 18h00",
-    Mercredi: "9h00 - 21h45",
-    Jeudi: "9h00 - 18h00",
-    Vendredi: "9h00 - 21h45",
-    Samedi: "9h00 - 18h00",
-    Dimanche: "9h00 - 18h00",
-  },
-  description:
-    "Le Musée du Louvre est le plus grand musée d'art du monde et un monument historique situé à Paris. Avec plus de 35 000 œuvres exposées sur 60 600 m², le Louvre est le musée le plus visité au monde.",
-  history:
-    "Ancienne résidence royale, le Louvre est devenu un musée public en 1793. Il abrite des collections d'art occidental du Moyen Âge à 1848, ainsi que des civilisations antiques orientales, égyptiennes, grecques, étrusques et romaines.",
-  highlights: [
-    "La Joconde de Léonard de Vinci",
-    "La Vénus de Milo",
-    "La Liberté guidant le peuple de Delacroix",
-    "Les Noces de Cana de Véronèse",
-  ],
-  currentExhibits: [
-    {
-      id: 1,
-      title: "Léonard de Vinci",
-      endDate: "2024-02-24",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 2,
-      title: "Art Islamique",
-      endDate: "2024-06-15",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ],
-  images: [
-    "/louvre.jpg",
-    "/placeholder.svg?height=400&width=600&text=Louvre+Interior",
-    "/placeholder.svg?height=400&width=600&text=Gallery+View",
-    "/placeholder.svg?height=400&width=600&text=Architecture",
-  ],
+interface MuseumData {
+  id: number;
+  name: string;
+  location: string;
+  address: string;
+  phone: string;
+  website: string;
+  category: string;
+  rating: number;
+  totalReviews?: number; // Make totalReviews optional
+  openingHours: { [key: string]: string } | string; // Allow openingHours to be a string or object
+  description: string;
+  history: string;
+  highlights: string[];
+  currentExhibits: { id: number; title: string; endDate: string; image: string }[];
+  images: string[];
   accessibility: {
-    wheelchairAccess: true,
-    audioGuides: true,
-    signLanguage: true,
-    braille: true,
-  },
-  amenities: ["Boutique de souvenirs", "Restaurant", "Café", "Vestiaire", "WiFi gratuit", "Parking"],
+    wheelchairAccess: boolean;
+    audioGuides: boolean;
+    signLanguage: boolean;
+    braille: boolean;
+  };
+  amenities: string[];
 }
 
-const reviews = [
-  {
-    id: 1,
-    user: {
-      name: "Marie Dubois",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: true,
-      reviewsCount: 47,
-      memberSince: "2022",
-    },
-    rating: 5,
-    date: "15 janvier 2024",
-    title: "Une expérience inoubliable",
-    content:
-      "Le Louvre est vraiment exceptionnel. La collection est immense et la qualité des œuvres est remarquable. J'ai particulièrement apprécié la section égyptienne et bien sûr, voir la Joconde en vrai était magique. Le personnel est très accueillant et les audioguides sont excellents.",
-    likes: 24,
-    helpful: 18,
-    images: ["/placeholder.svg?height=200&width=300", "/placeholder.svg?height=200&width=300"],
-    tags: ["Famille", "Éducatif", "Inspirant"],
-    replies: [
-      {
-        id: 1,
-        user: {
-          name: "Équipe Louvre",
-          avatar: "/placeholder.svg?height=40&width=40",
-          isMuseumStaff: true,
-        },
-        content:
-          "Merci Marie pour ce merveilleux retour ! Nous sommes ravis que votre visite ait été si enrichissante.",
-        date: "16 janvier 2024",
-        likes: 5,
-      },
-    ],
-  },
-  {
-    id: 2,
-    user: {
-      name: "Pierre Martin",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: false,
-      reviewsCount: 12,
-      memberSince: "2023",
-    },
-    rating: 4,
-    date: "10 janvier 2024",
-    title: "Magnifique mais bondé",
-    content:
-      "Les collections sont absolument magnifiques, mais il y a beaucoup de monde. Je recommande de réserver à l'avance et d'y aller tôt le matin pour éviter les foules. La Joconde était difficile à voir à cause de la foule, mais les autres œuvres valent vraiment le détour.",
-    likes: 12,
-    helpful: 8,
-    tags: ["Bondé", "Conseils"],
-    replies: [],
-  },
-]
 
-const ratingDistribution = {
-  5: 8420,
-  4: 4200,
-  3: 1800,
-  2: 600,
-  1: 400,
-}
+import React from "react"
 
-export default function MuseumDetailPage() {
+export default function MuseumDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter()
+  const { id } = React.use(params)
+  const [museumData, setMuseumData] = useState<MuseumData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [reviews, setReviews] = useState<any[]>([])
+  const [ratingDistribution, setRatingDistribution] = useState<{[key: number]: number}>({})
+
+  useEffect(() => {
+    const fetchMuseum = async () => {
+      try {
+        const { data: museum, error: museumError } = await supabase.from("museums").select("*").eq("id", id).single()
+        if (museumError) throw museumError
+
+        const { count: reviewsCount, error: reviewsError } = await supabase
+          .from("reviews")
+          .select("count", { count: "exact" })
+          .eq("museum_id", id)
+        if (reviewsError) throw reviewsError
+
+        const { data: exhibits, error: exhibitsError } = await supabase
+          .from("exhibits")
+          .select("id, title, end_date, image")
+          .eq("museum_id", id)
+        if (exhibitsError) throw exhibitsError
+
+        // Map end_date to endDate for consistency with the interface
+        const formattedExhibits = exhibits.map(exhibit => ({
+          ...exhibit,
+          endDate: exhibit.end_date,
+        }));
+
+        // Fetch reviews with user data
+        const { data: reviewsData, error: reviewsDataError } = await supabase
+          .from("reviews")
+          .select(`
+            *,
+            users (
+              name,
+              avatar,
+              verified,
+              reviews_count,
+              member_since
+            )
+          `)
+          .eq("museum_id", id)
+          .order("date", { ascending: false })
+          .limit(10)
+        if (reviewsDataError) throw reviewsDataError
+
+        // Calculate rating distribution
+        const { data: ratingData, error: ratingDataError } = await supabase
+          .from("reviews")
+          .select("rating")
+          .eq("museum_id", id)
+        if (ratingDataError) throw ratingDataError
+
+        const distribution: {[key: number]: number} = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        ratingData.forEach(review => {
+          distribution[review.rating] = (distribution[review.rating] || 0) + 1
+        })
+
+        setReviews(reviewsData || [])
+        setRatingDistribution(distribution)
+        setMuseumData({ ...museum, totalReviews: reviewsCount, currentExhibits: formattedExhibits } as MuseumData)
+      } catch (error: any) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchMuseum()
+    }
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading museum details...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Error: {error}</p>
+      </div>
+    )
+  }
+
+  if (!museumData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Museum not found.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6" aria-label="Fil d'Ariane">
-          <ol className="flex items-center space-x-2 text-sm">
-            <li>
-              <Link
-                href="/"
-                className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-              >
-                Accueil
-              </Link>
-            </li>
-            <li className="text-gray-500">/</li>
-            <li>
-              <Link
-                href="/museums"
-                className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-              >
-                Musées
-              </Link>
-            </li>
-            <li className="text-gray-500">/</li>
-            <li className="text-gray-900 dark:text-gray-100" aria-current="page">
-              {museumData.name}
-            </li>
-          </ol>
-        </nav>
+      <main className="container mx-auto px-4">
 
         {/* Hero Section */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12 pt-16">
           {/* Image Gallery */}
           <div className="space-y-4">
             <div className="relative h-96 rounded-xl overflow-hidden">
               <Image
-                src={museumData.images[selectedImageIndex] || "/placeholder.svg"}
+                src={
+                  (museumData.images && museumData.images.length > 0 && museumData.images[selectedImageIndex]) ||
+                  (museumData as any).image ||
+                  "/placeholder.svg"
+                }
                 alt={`${museumData.name} - Image ${selectedImageIndex + 1}`}
                 fill
                 className="object-cover"
@@ -186,31 +172,33 @@ export default function MuseumDetailPage() {
               <div className="absolute top-4 right-4 flex gap-2">
                 <Button size="sm" variant="secondary" className="bg-white/80 hover:bg-white">
                   <Camera className="w-4 h-4 mr-1" />
-                  {museumData.images.length}
+                  {Math.max((museumData.images || []).length, (museumData as any).image ? 1 : 0)}
                 </Button>
               </div>
             </div>
 
             {/* Thumbnail Gallery */}
-            <div className="grid grid-cols-4 gap-2">
-              {museumData.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`relative h-20 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    selectedImageIndex === index ? "border-blue-500" : "border-transparent hover:border-gray-300"
-                  }`}
-                  aria-label={`Voir l'image ${index + 1} de ${museumData.name}`}
-                >
-                  <Image
-                    src={image || "/placeholder.svg"}
-                    alt={`${museumData.name} - Miniature ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            {((museumData.images && museumData.images.length > 0) || (museumData as any).image) && (
+              <div className="grid grid-cols-4 gap-2">
+                {(museumData.images && museumData.images.length > 0 ? museumData.images : [(museumData as any).image]).filter(Boolean).map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`relative h-20 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      selectedImageIndex === index ? "border-blue-500" : "border-transparent hover:border-gray-300"
+                    }`}
+                    aria-label={`Voir l'image ${index + 1} de ${museumData.name}`}
+                  >
+                    <Image
+                      src={image || "/placeholder.svg"}
+                      alt={`${museumData.name} - Miniature ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Museum Info */}
@@ -221,7 +209,7 @@ export default function MuseumDetailPage() {
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">{museumData.rating}</span>
-                  <span className="text-gray-500">({museumData.totalReviews.toLocaleString()} avis)</span>
+                  <span className="text-gray-500">({museumData.totalReviews?.toLocaleString() || '0'} avis)</span>
                 </div>
               </div>
 
@@ -283,12 +271,22 @@ export default function MuseumDetailPage() {
                   Horaires d'ouverture
                 </h3>
                 <div className="space-y-2 text-sm">
-                  {Object.entries(museumData.openingHours).map(([day, hours]) => (
-                    <div key={day} className="flex justify-between">
-                      <span className="font-medium">{day}</span>
-                      <span className={hours === "Fermé" ? "text-red-600" : "text-green-600"}>{hours}</span>
+                  {typeof museumData.openingHours === 'string' && museumData.openingHours.trim() !== '' ? (
+                    <div className="flex justify-between">
+                      <span>{museumData.openingHours}</span>
                     </div>
-                  ))}
+                  ) : (
+                    Object.keys(museumData.openingHours || {}).length > 0 ? (
+                      Object.entries(museumData.openingHours || {}).map(([day, hours]) => (
+                        <div key={day} className="flex justify-between">
+                          <span className="font-medium">{day}</span>
+                          <span className={hours === "Fermé" ? "text-red-600" : "text-green-600"}>{hours}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">Horaires non disponibles.</p>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -313,7 +311,7 @@ export default function MuseumDetailPage() {
 
                 <h3 className="text-xl font-semibold mb-3">Œuvres incontournables</h3>
                 <ul className="space-y-2">
-                  {museumData.highlights.map((highlight, index) => (
+                  {(museumData.highlights || []).map((highlight, index) => (
                     <li key={index} className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span>{highlight}</span>
@@ -352,7 +350,7 @@ export default function MuseumDetailPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-6">Expositions actuelles</h2>
               <div className="grid md:grid-cols-2 gap-6">
-                {museumData.currentExhibits.map((exhibit) => (
+                {(museumData.currentExhibits || []).map((exhibit) => (
                   <Card key={exhibit.id} className="hover:shadow-lg transition-shadow">
                     <div className="relative h-48">
                       <Image
@@ -384,25 +382,25 @@ export default function MuseumDetailPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-4 h-4 rounded-full ${museumData.accessibility.wheelchairAccess ? "bg-green-500" : "bg-red-500"}`}
+                        className={`w-4 h-4 rounded-full ${museumData.accessibility?.wheelchairAccess ? "bg-green-500" : "bg-red-500"}`}
                       ></div>
                       <span>Accès en fauteuil roulant</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-4 h-4 rounded-full ${museumData.accessibility.audioGuides ? "bg-green-500" : "bg-red-500"}`}
+                        className={`w-4 h-4 rounded-full ${museumData.accessibility?.audioGuides ? "bg-green-500" : "bg-red-500"}`}
                       ></div>
                       <span>Audioguides disponibles</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-4 h-4 rounded-full ${museumData.accessibility.signLanguage ? "bg-green-500" : "bg-red-500"}`}
+                        className={`w-4 h-4 rounded-full ${museumData.accessibility?.signLanguage ? "bg-green-500" : "bg-red-500"}`}
                       ></div>
                       <span>Visites en langue des signes</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-4 h-4 rounded-full ${museumData.accessibility.braille ? "bg-green-500" : "bg-red-500"}`}
+                        className={`w-4 h-4 rounded-full ${museumData.accessibility?.braille ? "bg-green-500" : "bg-red-500"}`}
                       ></div>
                       <span>Supports en braille</span>
                     </div>
@@ -425,7 +423,7 @@ export default function MuseumDetailPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-6">Services et équipements</h2>
               <div className="grid md:grid-cols-3 gap-4">
-                {museumData.amenities.map((amenity, index) => (
+                {(museumData.amenities || []).map((amenity, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span>{amenity}</span>
@@ -440,7 +438,7 @@ export default function MuseumDetailPage() {
               museumId={museumData.id}
               reviews={reviews}
               averageRating={museumData.rating}
-              totalReviews={museumData.totalReviews}
+              totalReviews={museumData.totalReviews || 0}
               ratingDistribution={ratingDistribution}
             />
           </TabsContent>

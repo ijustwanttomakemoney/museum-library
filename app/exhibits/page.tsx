@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,99 +11,82 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import { supabase } from "@/lib/supabaseClient"
 
-const exhibits = [
-  {
-    id: 1,
-    title: "Monet et les Nymphéas",
-    museum: "Musée de l'Orangerie",
-    location: "Paris",
-    category: "Impressionnisme",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-01-15",
-    endDate: "2024-03-15",
-    status: "En cours",
-    visitors: 1250,
-    description: "Une immersion totale dans l'univers des Nymphéas de Claude Monet.",
-    price: "14€",
-  },
-  {
-    id: 2,
-    title: "Égypte Ancienne: Trésors des Pharaons",
-    museum: "Musée du Louvre",
-    location: "Paris",
-    category: "Archéologie",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-02-01",
-    endDate: "2024-04-20",
-    status: "En cours",
-    visitors: 980,
-    description: "Découvrez les trésors exceptionnels de l'Égypte ancienne.",
-    price: "16€",
-  },
-  {
-    id: 3,
-    title: "Picasso: Période Bleue",
-    museum: "Musée Picasso",
-    location: "Paris",
-    category: "Art Moderne",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-01-10",
-    endDate: "2024-02-28",
-    status: "Se termine bientôt",
-    visitors: 750,
-    description: "Les œuvres emblématiques de la période bleue de Picasso.",
-    price: "12€",
-  },
-  {
-    id: 4,
-    title: "Van Gogh: Les Dernières Années",
-    museum: "Musée d'Orsay",
-    location: "Paris",
-    category: "Post-Impressionnisme",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-03-01",
-    endDate: "2024-06-15",
-    status: "À venir",
-    visitors: 0,
-    description: "Les œuvres poignantes des dernières années de Van Gogh.",
-    price: "15€",
-  },
-  {
-    id: 5,
-    title: "Dinosaures: Géants du Passé",
-    museum: "Muséum d'Histoire Naturelle",
-    location: "Paris",
-    category: "Sciences",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-01-20",
-    endDate: "2024-05-30",
-    status: "En cours",
-    visitors: 2100,
-    description: "Une exposition spectaculaire sur les dinosaures et leur époque.",
-    price: "13€",
-  },
-  {
-    id: 6,
-    title: "Renaissance Italienne",
-    museum: "Musée des Beaux-Arts",
-    location: "Lyon",
-    category: "Renaissance",
-    image: "/placeholder.svg?height=250&width=400",
-    startDate: "2024-02-15",
-    endDate: "2024-07-10",
-    status: "En cours",
-    visitors: 420,
-    description: "Chefs-d'œuvre de la Renaissance italienne.",
-    price: "11€",
-  },
-]
+interface Exhibit {
+  id: number;
+  title: string;
+  museum: string;
+  location: string;
+  category: string;
+  image: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  visitors: number;
+  description: string;
+  ticket_price: number;
+}
 
 export default function ExhibitsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [sortBy, setSortBy] = useState("endDate")
+  const [exhibits, setExhibits] = useState<Exhibit[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchExhibits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("exhibits")
+          .select(`
+            *,
+            museums (name, location)
+          `)
+          .order("end_date", { ascending: true })
+        
+        if (error) throw error
+
+        // Format the data to match our interface
+        const formattedExhibits = data?.map(exhibit => ({
+          ...exhibit,
+          museum: exhibit.museums?.name || 'Unknown Museum',
+          location: exhibit.museums?.location || 'Unknown Location',
+          status: getExhibitStatus(exhibit.start_date, exhibit.end_date),
+          visitors: Math.floor(Math.random() * 2000) + 100, // Placeholder visitor count
+          category: exhibit.title.includes('Monet') ? 'Impressionnisme' : 
+                   exhibit.title.includes('Picasso') ? 'Art Moderne' :
+                   exhibit.title.includes('Égypte') ? 'Archéologie' :
+                   exhibit.title.includes('Van Gogh') ? 'Post-Impressionnisme' :
+                   exhibit.title.includes('Dinosaure') ? 'Sciences' :
+                   exhibit.title.includes('Renaissance') ? 'Renaissance' : 'Art'
+        })) || []
+
+        setExhibits(formattedExhibits)
+      } catch (error: any) {
+        setError(error.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchExhibits()
+  }, [])
+
+  const getExhibitStatus = (startDate: string, endDate: string) => {
+    const now = new Date()
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const daysUntilEnd = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (now < start) return "À venir"
+    if (now > end) return "Terminée"
+    if (daysUntilEnd <= 30) return "Se termine bientôt"
+    return "En cours"
+  }
 
   const filteredExhibits = exhibits
     .filter((exhibit) => {
@@ -116,7 +99,7 @@ export default function ExhibitsPage() {
       return matchesSearch && matchesCategory && matchesStatus
     })
     .sort((a, b) => {
-      if (sortBy === "endDate") return new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+      if (sortBy === "endDate") return new Date(a.end_date).getTime() - new Date(b.end_date).getTime()
       if (sortBy === "visitors") return b.visitors - a.visitors
       if (sortBy === "title") return a.title.localeCompare(b.title)
       return 0
@@ -260,7 +243,7 @@ export default function ExhibitsPage() {
                     </div>
                     <div className="flex items-center gap-1 text-gray-600 text-sm">
                       <Calendar className="h-4 w-4" />
-                      <span>Jusqu'au {formatDate(exhibit.endDate)}</span>
+                      <span>Jusqu'au {formatDate(exhibit.end_date)}</span>
                     </div>
                     {exhibit.visitors > 0 && (
                       <div className="flex items-center gap-1 text-gray-600 text-sm">
@@ -273,7 +256,7 @@ export default function ExhibitsPage() {
                   <p className="text-gray-700 text-sm mb-4 line-clamp-2">{exhibit.description}</p>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-blue-600">{exhibit.price}</span>
+                    <span className="text-lg font-semibold text-blue-600">{exhibit.ticket_price ? `${exhibit.ticket_price}€` : 'Gratuit'}</span>
                     <Link href={`/exhibits/${exhibit.id}`}>
                       <Button size="sm">Découvrir</Button>
                     </Link>

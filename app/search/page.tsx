@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,65 +12,7 @@ import Link from "next/link"
 import Image from "next/image"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-
-const searchResults = {
-  museums: [
-    {
-      id: 1,
-      name: "Musée du Louvre",
-      location: "Paris",
-      category: "Art",
-      image: "/louvre-museum.png",
-      rating: 4.8,
-      openingHours: "9h00 - 18h00",
-    },
-    {
-      id: 2,
-      name: "Musée d'Orsay",
-      location: "Paris",
-      category: "Impressionnisme",
-      image: "/musee-dorsay-interior.png",
-      rating: 4.7,
-      openingHours: "9h30 - 18h00",
-    },
-  ],
-  exhibits: [
-    {
-      id: 1,
-      title: "Monet et les Nymphéas",
-      museum: "Musée de l'Orangerie",
-      location: "Paris",
-      image: "/placeholder.svg?height=200&width=300",
-      endDate: "2024-03-15",
-      visitors: 1250,
-    },
-    {
-      id: 2,
-      title: "Égypte Ancienne",
-      museum: "Musée du Louvre",
-      location: "Paris",
-      image: "/placeholder.svg?height=200&width=300",
-      endDate: "2024-04-20",
-      visitors: 980,
-    },
-  ],
-  events: [
-    {
-      id: 1,
-      title: "Nuit des Musées",
-      date: "2024-05-18",
-      location: "Toute la France",
-      type: "Événement National",
-    },
-    {
-      id: 2,
-      title: "Conférence: Art et IA",
-      date: "2024-02-25",
-      location: "Centre Pompidou",
-      type: "Conférence",
-    },
-  ],
-}
+import { supabase } from "@/lib/supabaseClient"
 
 export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -78,10 +20,135 @@ export default function SearchPage() {
   const [selectedLocation, setSelectedLocation] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("relevance")
+  const [searchResults, setSearchResults] = useState<{
+    museums: any[];
+    exhibits: any[];
+    events: any[];
+  }>({
+    museums: [],
+    exhibits: [],
+    events: []
+  })
+  const [loading, setLoading] = useState(false)
 
-  const handleSearch = () => {
-    // Here you would typically make an API call to search
-    console.log("Searching for:", searchQuery)
+  useEffect(() => {
+    // Load initial data
+    fetchInitialData()
+  }, [])
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch museums
+      const { data: museums, error: museumsError } = await supabase
+        .from("museums")
+        .select("*")
+        .limit(6)
+      if (museumsError) throw museumsError
+
+      // Fetch exhibits
+      const { data: exhibits, error: exhibitsError } = await supabase
+        .from("exhibits")
+        .select(`
+          *,
+          museums (name, location)
+        `)
+        .limit(6)
+      if (exhibitsError) throw exhibitsError
+
+      // Format exhibits data
+      const formattedExhibits = exhibits?.map(exhibit => ({
+        ...exhibit,
+        museum: exhibit.museums?.name || 'Unknown Museum',
+        location: exhibit.museums?.location || 'Unknown Location',
+        endDate: new Date(exhibit.end_date).toLocaleDateString('fr-FR'),
+        visitors: Math.floor(Math.random() * 2000) + 100
+      })) || []
+
+      // Mock events data
+      const mockEvents = [
+        {
+          id: 1,
+          title: "Nuit des Musées",
+          date: "2024-05-18",
+          location: "Toute la France",
+          type: "Événement National",
+        },
+        {
+          id: 2,
+          title: "Conférence: Art et IA",
+          date: "2024-02-25",
+          location: "Centre Pompidou",
+          type: "Conférence",
+        },
+      ]
+
+      setSearchResults({
+        museums: museums || [],
+        exhibits: formattedExhibits,
+        events: mockEvents
+      })
+    } catch (error) {
+      console.error('Error fetching initial data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      fetchInitialData()
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      // Search museums
+      const { data: museums, error: museumsError } = await supabase
+        .from("museums")
+        .select("*")
+        .or(`name.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+        .limit(10)
+      if (museumsError) throw museumsError
+
+      // Search exhibits
+      const { data: exhibits, error: exhibitsError } = await supabase
+        .from("exhibits")
+        .select(`
+          *,
+          museums (name, location)
+        `)
+        .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`)
+        .limit(10)
+      if (exhibitsError) throw exhibitsError
+
+      // Format exhibits data
+      const formattedExhibits = exhibits?.map(exhibit => ({
+        ...exhibit,
+        museum: exhibit.museums?.name || 'Unknown Museum',
+        location: exhibit.museums?.location || 'Unknown Location',
+        endDate: new Date(exhibit.end_date).toLocaleDateString('fr-FR'),
+        visitors: Math.floor(Math.random() * 2000) + 100
+      })) || []
+
+      // Filter events based on search query
+      const filteredEvents = searchResults.events.filter(event =>
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+
+      setSearchResults({
+        museums: museums || [],
+        exhibits: formattedExhibits,
+        events: filteredEvents
+      })
+    } catch (error) {
+      console.error('Error searching:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
