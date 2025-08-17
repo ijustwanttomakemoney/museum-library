@@ -12,10 +12,6 @@ const nextConfig = {
   // Removed output: 'export' to allow dynamic routes with database dependencies
   trailingSlash: true,
   distDir: 'dist',
-  // Optimize build for Cloudflare Pages
-  experimental: {
-    optimizeCss: true,
-  },
   // Exclude cache and other large files from build output
   webpack: (config, { isServer }) => {
     // Optimize bundle size

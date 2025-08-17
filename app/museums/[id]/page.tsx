@@ -14,6 +14,7 @@ import EnhancedReviewSystem from "@/components/enhanced-review-system"
 import FollowButton from "@/components/follow-button"
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import React from "react"
 
 interface MuseumData {
   id: number;
@@ -24,8 +25,8 @@ interface MuseumData {
   website: string;
   category: string;
   rating: number;
-  totalReviews?: number; // Make totalReviews optional
-  openingHours: { [key: string]: string } | string; // Allow openingHours to be a string or object
+  totalReviews?: number;
+  openingHours: { [key: string]: string } | string;
   description: string;
   history: string;
   highlights: string[];
@@ -39,9 +40,6 @@ interface MuseumData {
   };
   amenities: string[];
 }
-
-
-import React from "react"
 
 export default function MuseumDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -57,6 +55,11 @@ export default function MuseumDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const fetchMuseum = async () => {
       try {
+        if (!isSupabaseConfigured()) {
+          setError("Database not configured")
+          return
+        }
+
         const { data: museum, error: museumError } = await supabase.from("museums").select("*").eq("id", id).single()
         if (museumError) throw museumError
 
@@ -73,10 +76,10 @@ export default function MuseumDetailPage({ params }: { params: Promise<{ id: str
         if (exhibitsError) throw exhibitsError
 
         // Map end_date to endDate for consistency with the interface
-        const formattedExhibits = exhibits.map(exhibit => ({
+        const formattedExhibits = exhibits?.map(exhibit => ({
           ...exhibit,
           endDate: exhibit.end_date,
-        }));
+        })) || [];
 
         // Fetch reviews with user data
         const { data: reviewsData, error: reviewsDataError } = await supabase
@@ -104,7 +107,7 @@ export default function MuseumDetailPage({ params }: { params: Promise<{ id: str
         if (ratingDataError) throw ratingDataError
 
         const distribution: {[key: number]: number} = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-        ratingData.forEach(review => {
+        ratingData?.forEach(review => {
           distribution[review.rating] = (distribution[review.rating] || 0) + 1
         })
 
