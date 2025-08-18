@@ -3,6 +3,8 @@
 // Client component for better Cloudflare Pages compatibility
 // Static generation approach conflicts with "use client"
 
+export const runtime = 'edge';
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
