@@ -1,13 +1,27 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+let client: SupabaseClient | undefined
 
-// Use createBrowserClient for client-side components
-// This is safe to use in components with "use client"
-export const supabase = createBrowserClient(supabaseUrl!, supabaseAnonKey!)
+function getSupabaseBrowserClient() {
+  if (client) {
+    return client
+  }
 
-// Helper function to check if Supabase is properly configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase URL or Anon Key is not defined.')
+  }
+
+  client = createBrowserClient(supabaseUrl, supabaseAnonKey)
+
+  return client
+}
+
+export const supabase = getSupabaseBrowserClient()
+
 export const isSupabaseConfigured = () => {
-  return !!(supabaseUrl && supabaseAnonKey)
+  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 }
