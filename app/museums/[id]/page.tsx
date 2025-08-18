@@ -17,7 +17,6 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import EnhancedReviewSystem from "@/components/enhanced-review-system"
 import FollowButton from "@/components/follow-button"
-import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import React from "react"
 
@@ -60,7 +59,9 @@ export default function MuseumDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const fetchMuseum = async () => {
       try {
-        if (!isSupabaseConfigured()) {
+        const { supabase, isSupabaseConfigured } = await import('@/lib/supabaseClient');
+
+        if (!isSupabaseConfigured() || !supabase) {
           setError("Database not configured")
           return
         }
