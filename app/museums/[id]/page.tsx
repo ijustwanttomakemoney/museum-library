@@ -1,8 +1,7 @@
 "use client"
 
-// Use static generation to avoid edge runtime issues
-// export const dynamic = 'force-dynamic'
-// export const runtime = 'edge'
+// Client component for better Cloudflare Pages compatibility
+// Static generation approach conflicts with "use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -19,19 +18,6 @@ import FollowButton from "@/components/follow-button"
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import React from "react"
-
-// Generate static params for known museum IDs
-export async function generateStaticParams() {
-  // Return some common museum IDs for static generation
-  // More can be added dynamically at runtime
-  return [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
-    { id: '4' },
-    { id: '5' },
-  ]
-}
 
 interface MuseumData {
   id: number;
