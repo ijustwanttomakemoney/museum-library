@@ -2,8 +2,8 @@
 
 // Force dynamic rendering - prevent static generation
 export const dynamic = 'force-dynamic'
-// Configure for Cloudflare Edge Runtime - required for Cloudflare Pages
-export const runtime = 'edge'
+// Note: Edge runtime disabled to resolve "self is not defined" error
+// export const runtime = 'edge'
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
