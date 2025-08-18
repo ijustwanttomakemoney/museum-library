@@ -9,13 +9,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Removed output: 'export' to allow dynamic routes with database dependencies
+  // Configure for Cloudflare Pages deployment
+  output: 'standalone',
   trailingSlash: true,
-  distDir: 'dist',
-  // Disable webpack caching to prevent large cache files in production
+  distDir: '.next',
+  experimental: {
+    // Enable server components and app directory features
+  },
+  // Optimize for Cloudflare Pages
   webpack: (config, { isServer, dev }) => {
     // Only disable caching in production builds to prevent large cache files
-    // Keep caching enabled in development for proper functionality
     if (!dev && process.env.NODE_ENV === 'production') {
       config.cache = false
     }
@@ -35,6 +38,7 @@ const nextConfig = {
         },
       },
     }
+    
     return config
   },
 }

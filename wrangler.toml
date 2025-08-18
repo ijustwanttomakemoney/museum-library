@@ -1,9 +1,17 @@
 name = "museum-library"
 compatibility_date = "2024-08-11"
-pages_build_output_dir = "dist"
+pages_build_output_dir = ".vercel/output/static"
 
 [env.production]
 name = "museum-library"
 
 [[env.production.env.vars]]
 NODE_ENV = "production"
+
+# Environment variables for production
+# Add your actual Supabase credentials in Cloudflare Pages dashboard
+# NEXT_PUBLIC_SUPABASE_URL = "your-supabase-url"
+# NEXT_PUBLIC_SUPABASE_ANON_KEY = "your-supabase-anon-key"
+
+[build]
+command = "npm run build:cf"

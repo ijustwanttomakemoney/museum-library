@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "museum-library",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,10 @@
     "dev": "next dev -p 3001",
     "lint": "next lint",
     "start": "next start",
-    "preview": "npx wrangler pages dev .vercel/output/static"
+    "preview": "npx wrangler pages dev .vercel/output/static",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:deploy": "npm run build:cf && npx wrangler pages deploy",
+    "pages:watch": "npx @cloudflare/next-on-pages --watch"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -40,6 +43,7 @@
     "@radix-ui/react-toggle": "1.1.1",
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.55.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
@@ -64,6 +68,7 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.13",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
     "@types/react": "^19",

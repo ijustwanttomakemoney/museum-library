@@ -1,6 +1,8 @@
 "use client"
 
-import type React from "react"
+import React from "react" // Temporary change to trigger re-evaluation
+
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
