@@ -9,8 +9,8 @@
 - ✅ Added edge runtime configuration to dynamic routes
 - ✅ Updated Next.js configuration for Cloudflare compatibility
 
-### Remaining Issue:
-- ⚠️ **Edge Runtime Compatibility**: Some dependencies may not be fully compatible with Cloudflare's edge runtime
+### Resolved Issue:
+- ✅ **Edge Runtime Compatibility**: Removed edge runtime export from `app/museums/[id]/page.tsx` to use default Node.js runtime for better compatibility with dependencies
 
 ## 🚀 Deployment Steps
 

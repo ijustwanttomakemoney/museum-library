@@ -1,9 +1,8 @@
-"use client"
+// Server-side rendered page for better Cloudflare Pages compatibility
+// Using edge runtime causes compatibility issues with several dependencies
 
-// Client component for better Cloudflare Pages compatibility
-// Static generation approach conflicts with "use client"
-
-export const runtime = 'edge';
+// Remove the runtime export to use default Node.js runtime
+// export const runtime = 'edge';
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"

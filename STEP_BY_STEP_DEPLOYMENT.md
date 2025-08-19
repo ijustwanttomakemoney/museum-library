@@ -2,6 +2,8 @@
 
 ## Current Status: Ready for Deployment! ✅
 
+**Edge Runtime Issue Resolved:** The edge runtime compatibility issue has been fixed by removing the `export const runtime = 'edge'` from `app/museums/[id]/page.tsx`. The page now uses the default Node.js runtime for better compatibility with dependencies.
+
 Your museum library is configured and ready. Follow these steps to deploy:
 
 ## Step 1: Authenticate with Cloudflare

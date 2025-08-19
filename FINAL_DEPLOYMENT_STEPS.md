@@ -81,11 +81,8 @@ NODE_ENV = production
 2. Ensure Node.js version is set to 18
 3. Verify build command is exactly: `npm run build:cf`
 
-### If Edge Runtime Errors:
-1. Go to your GitHub repo
-2. Edit `app/museums/[id]/page.tsx`
-3. Comment out: `// export const runtime = 'edge'`
-4. Commit and push - auto-deploys!
+### Edge Runtime Issue Resolved:
+The edge runtime compatibility issue has been fixed by removing the `export const runtime = 'edge'` from `app/museums/[id]/page.tsx`. The page now uses the default Node.js runtime for better compatibility with dependencies. No further action needed for this issue.
 
 ### If Database Not Working:
 1. Verify environment variables are added correctly
